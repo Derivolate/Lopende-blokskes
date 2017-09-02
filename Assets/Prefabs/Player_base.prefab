@@ -54,10 +54,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cursor: {fileID: 4750706895678122, guid: ae3f11fd7eec7eb4caeac55c80715941, type: 2}
-  unit_prefab: {fileID: 1508543648554894, guid: 2fcd1031c30fef8468d23e46683213e5,
-    type: 2}
   selection_square: {fileID: 114677545932318432, guid: 406f895d3396cc046b99aaea8941d160,
     type: 2}
+  unit_prefab: {fileID: 1508543648554894, guid: 2fcd1031c30fef8468d23e46683213e5,
+    type: 2}
+  team: 0
 --- !u!114 &114614680805102086
 MonoBehaviour:
   m_ObjectHideFlags: 1

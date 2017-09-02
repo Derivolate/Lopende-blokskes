@@ -1,9 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
-
+using UnityEngine.Networking.NetworkSystem;
 
 namespace Assets.Scripts
 {
@@ -11,14 +12,21 @@ namespace Assets.Scripts
     {
         public Transform cursor;
         public Image selection_square;
+        public GameObject unit_prefab;
+
         private Camera main_cam;
-        private Team team;
-        private uint netid;
+
+        [SyncVar]
+        public Team team;
+
+        private NetworkClient client;
+
         //Units is an array of all the units belonging to this player.
         private GameObject[] units = new GameObject[0];
         private List<GameObject> selected_units = new List<GameObject>();
-        private Server_controller server_controller = new Server_controller();
+        private Server_controller server_controller;
 
+        private SyncListInt team_ids = new SyncListInt();
 
         private Vector2 selection_square_corner;
         #region unity functions
@@ -28,12 +36,23 @@ namespace Assets.Scripts
         }
         void Start()
         {
+            
             main_cam = FindObjectOfType<Camera>();
             cursor = Instantiate(cursor);
             selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
 
             hide_cursor();
             reset_selection_square();
+
+            for(int i = 0; i<team_ids.Count; i++)
+            {
+                team_ids[i] = -1;
+            }
+            client = NetworkManager.singleton.client;
+
+            NetworkManager.singleton.client.RegisterHandler(Reference.team_message, set_team);
+            if(isLocalPlayer)
+                client.Send(Reference.team_message, new IntegerMessage());
         }
 
 
@@ -109,7 +128,7 @@ namespace Assets.Scripts
             }
             if (Input.GetMouseButtonDown(2))
             {
-                spawn_block(0);
+                spawn_block(team);
             }
 
         }
@@ -120,7 +139,19 @@ namespace Assets.Scripts
                 unit.GetComponent<Unit_controller>().move();
             }
         }
+        private void OnConnectedToServer()
+        {
+            
+        }
         #endregion
+        
+        //This is called when the client recieves a team_message
+        private void set_team(NetworkMessage msg)
+        {
+            team = (Team)msg.ReadMessage<IntegerMessage>().value;
+            Debug.Log("I got assigned to team " + team);
+        }
+        
 
         /// <summary>
         /// Moves the cursor to a place far far away from here
@@ -183,18 +214,13 @@ namespace Assets.Scripts
             selected_units.Clear();
         }
         #endregion
-        private void OnConnectedToServer()
-        {
-            netid = GetComponent<NetworkIdentity>().netId.Value;
-            server_controller.Cmd_register_player(netid);
-        }
-
 
         private void spawn_block(Team team)
         {
-            server_controller.Cmd_spawn_unit(team);
+            client.Send(Reference.spawn_message, new IntegerMessage());
             units = GameObject.FindGameObjectsWithTag("Unit_blue");
         }
+
 
     }
 }

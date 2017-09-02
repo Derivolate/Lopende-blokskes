@@ -15,6 +15,7 @@ namespace Assets.Scripts
         public static float max_velocity_squared = 10;
         public static float max_velocity = Mathf.Sqrt(max_velocity_squared);
 
-        
+        public static short team_message = 100;
+        public static short spawn_message = 101;
     }
 }
