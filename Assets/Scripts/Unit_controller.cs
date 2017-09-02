@@ -1,46 +1,49 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Assets.scripts
+namespace Assets.Scripts
 {
 
-    public class Unit
+    public class Unit_controller:MonoBehaviour
     {
-        public GameObject cube;
-        public string name;
-        public int health;
-        public team team;
-        public Vector3 destination;
-        private Renderer rend;
-        private Rigidbody rb;
+        public Team team { get; private set; }
+        public Vector3 destination { get; set; }
         private Color base_color;
-        
-        public Unit(GameObject _cube, Vector3 coords, team _team) :this(_cube,coords,_team, new Vector3(123,456,789)){}
-        public Unit(GameObject _cube, Vector3 coords, team _team, Vector3 _destination)
+        private Rigidbody rb;
+        private Renderer rend;
 
+        //public Unit(GameObject _cube, Vector3 coords, team _team) :this(_cube,coords,_team, new Vector3(123,456,789)){}
+        //public Unit(GameObject _cube, Vector3 coords, team _team, Vector3 _destination)
+        private void Awake()
         {
+            rb = GetComponent<Rigidbody>();
+            rend = GetComponent<Renderer>();
+        }
 
-            cube = Object.Instantiate(_cube);
-            rb = cube.GetComponent<Rigidbody>();
-            rend = cube.GetComponent<Renderer>();
+        public void init(Vector3 coords, Team _team) {init(coords, _team, new Vector3(123, 456, 789));}
+        public void init(Vector3 coords, Team _team, Vector3 _destination)
+        {
+            transform.position = coords;
 
-            cube.tag = "Unit";
-            cube.transform.position = coords;
 
             team = _team;
             switch (team)
             {
-                case team.blue:
+                case Team.blue:
                     base_color = Reference.blue_color;
+                    tag = "Unit_blue";
                     break;
-                case team.red:
+                case Team.red:
                     base_color = Reference.red_color;
+                    tag = "Unit_red";
                     break;
-                case team.green:
+                case Team.green:
                     base_color = Reference.green_color;
+                    tag = "Unit_green";
                     break;
-                case team.yellow:
+                case Team.yellow:
                     base_color = Reference.yellow_color;
+                    tag = "Unit_yellow";
                     break;
             }
 
@@ -60,7 +63,7 @@ namespace Assets.scripts
         public void move()
         {
 
-            Vector3 direction = -(cube.transform.position - destination);
+            Vector3 direction = -(transform.position - destination);
             direction.y = 0;
 
             //The cube has reached it's destination so it's horizontal velocity is set to 0 and return the function. It's vertical velocity is kept intact so it can still be affected by gravity.
@@ -94,14 +97,14 @@ namespace Assets.scripts
                 else
                 {
                     rb.velocity = rb.velocity * .7f;
-                    rb.AddForce(direction.normalized * 1, ForceMode.VelocityChange);
+                    rb.AddForce(direction.normalized * .5f, ForceMode.VelocityChange);
                 }
             }
         }
 
         public void destroy()
         {
-            Object.Destroy(cube);
+            Destroy(this);
         }
         #region coloring methods
         public void reset_color()

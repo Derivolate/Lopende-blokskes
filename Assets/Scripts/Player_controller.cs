@@ -2,22 +2,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
-namespace Assets.scripts
+
+namespace Assets.Scripts
 {
-    public class Main : MonoBehaviour
+    public class Player_controller : NetworkBehaviour
     {
         public Transform cursor;
-        public GameObject cube_prefab;
         public Image selection_square;
-        public Camera main_cam;
+        private Camera main_cam;
+        private Team team;
+        private uint netid;
+        //Units is an array of all the units belonging to this player.
+        private GameObject[] units = new GameObject[0];
+        private List<GameObject> selected_units = new List<GameObject>();
+        private Server_controller server_controller = new Server_controller();
 
-        private List<Unit> units = new List<Unit>();
-        private List<Unit> selected_units = new List<Unit>();
+
         private Vector2 selection_square_corner;
         #region unity functions
+        private void Awake()
+        {
+
+        }
         void Start()
         {
+            main_cam = FindObjectOfType<Camera>();
+            cursor = Instantiate(cursor);
+            selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
+
             hide_cursor();
             reset_selection_square();
         }
@@ -34,7 +48,7 @@ namespace Assets.scripts
                 if (Physics.Raycast(ray, out hit))
                 {
                     //If the cursor was indeed on a unit, select that unit
-                    if (hit.transform.tag == "Unit")
+                    if (hit.transform.tag == "Unit_blue")
                     {
                         //hide_cursor();
                         click_select_unit(hit);
@@ -42,19 +56,19 @@ namespace Assets.scripts
                     //If the cursor was anywhere else, hide teh cursor and deselect all units
                     else
                     {
-                        hide_cursor();
+                        //hide_cursor();
                         deselect_all_units();
                     }
                 }
             }
             else if (Input.GetMouseButton(0))
             {
-                //Create the selection square
+                ////Create the selection square
 
                 Vector2 mouse_pos = Input.mousePosition;
                 //Get the bottom left corner and set the position of the selection square to that corner
                 Vector2 bot_left_corner = new Vector2(
-                    (mouse_pos.x < selection_square_corner.x ? mouse_pos.x : selection_square_corner.x), 
+                    (mouse_pos.x < selection_square_corner.x ? mouse_pos.x : selection_square_corner.x),
                     (mouse_pos.y < selection_square_corner.y ? mouse_pos.y : selection_square_corner.y));
                 selection_square.rectTransform.position = bot_left_corner;
 
@@ -84,118 +98,103 @@ namespace Assets.scripts
                     if (hit.transform.tag == "World")
                     {
 
-                        foreach (Unit unit in selected_units)
+                        foreach (GameObject unit in selected_units)
                         {
-                            unit.destination = hit.point;
-                            Debug.Log("Changed destination to " + hit.point.ToString());
+                            unit.GetComponent<Unit_controller>().destination = hit.point;
                         }
                         cursor.transform.position = hit.point + new Vector3(0, .001f, 0);
 
                     }
                 }
             }
+            if (Input.GetMouseButtonDown(2))
+            {
+                spawn_block(0);
+            }
 
         }
         private void FixedUpdate()
         {
-            foreach (Unit unit in units)
+            foreach (GameObject unit in units)
             {
-                unit.move();
+                unit.GetComponent<Unit_controller>().move();
             }
-        }
-        private void OnGUI()
-        {
-
         }
         #endregion
 
+        /// <summary>
+        /// Moves the cursor to a place far far away from here
+        /// </summary>
+        #region unit selection methods
+        private void hide_cursor()
+        {
+            cursor.transform.position = new Vector3(100000, 100000, 100000);
+        }
         private void reset_selection_square()
         {
             selection_square.rectTransform.position = new Vector3();
             selection_square.rectTransform.sizeDelta = new Vector2();
         }
 
-        /// <summary>
-        /// Moves the cursor to a place far far away from here
-        /// </summary>
-        private void hide_cursor()
-        {
-            cursor.transform.position = new Vector3(100000, 100000, 100000);
-        }
         private void drag_select_unit(Vector2 botleft, Vector2 topright)
         {
-            if(!Input.GetKey(KeyCode.LeftShift) && selected_units.Count>1)
+            if (!Input.GetKey(KeyCode.LeftShift) && selected_units.Count > 1)
             {
                 deselect_all_units();
             }
-            foreach (Unit unit in units)
+            foreach (GameObject unit in units)
             {
-                Vector2 pos = main_cam.WorldToScreenPoint(unit.cube.transform.position);
+                Vector2 pos = main_cam.WorldToScreenPoint(unit.transform.position);
                 if (pos.x > botleft.x && pos.x < topright.x && pos.y > botleft.y && pos.y < topright.y)
                 {
                     selected_units.Add(unit);
-                    unit.set_selected_color();
+                    unit.GetComponent<Unit_controller>().set_selected_color();
                 }
             }
         }
         private void click_select_unit(RaycastHit hit)
         {
-            Renderer rend = hit.transform.GetComponent<MeshRenderer>();
             //If shift is not pressed, deselect all units
             if (!Input.GetKey(KeyCode.LeftShift))
             {
                 deselect_all_units();
             }
             //Loop through all units and check if it's the one that was clicked. If it is the one select it and break the loop.
-            foreach (var unit in units)
+            foreach (GameObject unit in units)
             {
-                if (unit.cube.transform.Equals(hit.transform))
+                if (unit.transform.Equals(hit.transform))
                 {
                     selected_units.Add(unit);
-                    unit.set_selected_color();
+                    unit.GetComponent<Unit_controller>().set_selected_color();
                     break;
                 }
             }
-            hide_cursor();
+            //hide_cursor();
         }
-
-        #region cube/unit/block functions (I need to choose a name)
         /// <summary>
         /// Resets the color of all units and empties selected_units
         /// </summary>
         private void deselect_all_units()
         {
-            foreach (var unit in selected_units)
+            foreach (GameObject unit in selected_units)
             {
-                unit.reset_color();
+                unit.GetComponent<Unit_controller>().reset_color();
             }
-            selected_units.Clear();
-        }
-
-        public void spawn_block(int _team)
-        {
-            team team = (team)_team;
-            units.Add(new Unit(cube_prefab, new Vector3(1, .5f, 1), team));
-        }
-        public void delete_all_cubes()
-        {
-            foreach (Unit unit in units)
-            {
-                unit.destroy();
-            }
-            units.Clear();
             selected_units.Clear();
         }
         #endregion
+        private void OnConnectedToServer()
+        {
+            netid = GetComponent<NetworkIdentity>().netId.Value;
+            server_controller.Cmd_register_player(netid);
+        }
 
-    }
 
-    //Does this need it's own file?
-    public enum team
-    {
-        blue,
-        red,
-        green,
-        yellow,
+        private void spawn_block(Team team)
+        {
+            server_controller.Cmd_spawn_unit(team);
+            units = GameObject.FindGameObjectsWithTag("Unit_blue");
+        }
+
     }
 }

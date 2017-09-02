@@ -5,7 +5,10 @@ TagManager:
   serializedVersion: 2
   tags:
   - World
-  - Unit
+  - Unit_blue
+  - Unit_red
+  - Unit_yellow
+  - Unit_green
   layers:
   - Default
   - TransparentFX

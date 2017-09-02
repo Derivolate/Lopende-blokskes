@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Assets.scripts
+namespace Assets.Scripts
 {
 
     public static class Reference
