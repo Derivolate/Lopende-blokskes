@@ -15,7 +15,7 @@ namespace Assets.Scripts
 
         public static Color[] colors = { Color.blue, Color.red, Color.yellow, Color.green };
         public static string[] unit_tags = { "Unit_blue", "Unit_red", "Unit_yellow", "Unit_green" };
-        public static string[] player_tags = { "Player_blue", "Player_red", "Unit_yellow", "Unit_green" };
+        public static string[] player_tags = { "Player_blue", "Player_red", "Player_yellow", "Player_green" };
     }
     public enum Team
     {

@@ -127,7 +127,7 @@ namespace Assets.Scripts
                     }
                 }
             }
-            if (Input.GetMouseButtonDown(2))
+            if (Input.GetKeyDown(KeyCode.S))
             {
                 if(Physics.Raycast(ray, out hit))
                 {
