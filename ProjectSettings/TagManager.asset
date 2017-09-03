@@ -9,6 +9,10 @@ TagManager:
   - Unit_red
   - Unit_yellow
   - Unit_green
+  - Player_blue
+  - Player_red
+  - Player_yellow
+  - Player_green
   layers:
   - Default
   - TransparentFX

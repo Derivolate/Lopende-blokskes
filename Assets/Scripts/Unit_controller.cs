@@ -1,16 +1,24 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 using System.Collections;
 
 namespace Assets.Scripts
 {
 
-    public class Unit_controller:MonoBehaviour
+    public class Unit_controller:NetworkBehaviour
     {
-        public Team team { get; private set; }
+        [SyncVar]
+        public Team team;
         public Vector3 destination { get; set; }
-        private Color base_color;
         private Rigidbody rb;
         private Renderer rend;
+
+
+        [SyncVar]
+        private Color base_color;
+
+        private bool has_started;
+        private bool has_inited;
 
         //public Unit(GameObject _cube, Vector3 coords, team _team) :this(_cube,coords,_team, new Vector3(123,456,789)){}
         //public Unit(GameObject _cube, Vector3 coords, team _team, Vector3 _destination)
@@ -20,43 +28,38 @@ namespace Assets.Scripts
             rend = GetComponent<Renderer>();
         }
 
-        public void init(Vector3 coords, Team _team) {init(coords, _team, new Vector3(123, 456, 789));}
-        public void init(Vector3 coords, Team _team, Vector3 _destination)
+        
+
+        [ClientRpc]
+        public void Rpc_init(Vector3 coords, Team _team)
         {
             transform.position = coords;
-
-
             team = _team;
-            switch (team)
-            {
-                case Team.blue:
-                    base_color = Reference.blue_color;
-                    tag = "Unit_blue";
-                    break;
-                case Team.red:
-                    base_color = Reference.red_color;
-                    tag = "Unit_red";
-                    break;
-                case Team.green:
-                    base_color = Reference.green_color;
-                    tag = "Unit_green";
-                    break;
-                case Team.yellow:
-                    base_color = Reference.yellow_color;
-                    tag = "Unit_yellow";
-                    break;
-            }
-
-            if (_destination == new Vector3(123, 456, 789))
-            {
-                _destination = coords;
-            }
-            else
-            {
-                destination = _destination;
-            }
-            reset_color();
+            has_inited = true;
+            if (has_started)
+                late_init();
         }
+
+        private void Start()
+        {
+            base_color = Reference.colors[(int)team];
+            tag = Reference.unit_tags[(int)team];
+            reset_color();
+
+            has_started = true;
+            if (has_inited)
+                late_init();
+        }
+        private void late_init()
+        {
+            if (!hasAuthority)
+                return;
+
+            destination = new Vector3(0, .25f, 0);
+            GameObject player = GameObject.FindGameObjectWithTag(Reference.player_tags[(int)team]);
+            player.GetComponent<Player_controller>().update_units();
+        }
+
         /// <summary>
         /// Must be called every fixed update. Moves towards the set destination
         /// </summary>

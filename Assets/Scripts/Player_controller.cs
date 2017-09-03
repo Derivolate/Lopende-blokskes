@@ -30,13 +30,12 @@ namespace Assets.Scripts
 
         private Vector2 selection_square_corner;
         #region unity functions
-        private void Awake()
-        {
 
-        }
         void Start()
         {
-            
+            if (!isLocalPlayer)
+                return;
+
             main_cam = FindObjectOfType<Camera>();
             cursor = Instantiate(cursor);
             selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
@@ -58,6 +57,8 @@ namespace Assets.Scripts
 
         void Update()
         {
+            if (!isLocalPlayer)
+                return;
             Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             //If the left mouse button is pressed, try selecting a unit
@@ -67,15 +68,15 @@ namespace Assets.Scripts
                 if (Physics.Raycast(ray, out hit))
                 {
                     //If the cursor was indeed on a unit, select that unit
-                    if (hit.transform.tag == "Unit_blue")
+                    if (hit.transform.tag == Reference.unit_tags[(int)team])
                     {
-                        //hide_cursor();
+                        hide_cursor();
                         click_select_unit(hit);
                     }
                     //If the cursor was anywhere else, hide teh cursor and deselect all units
                     else
                     {
-                        //hide_cursor();
+                        hide_cursor();
                         deselect_all_units();
                     }
                 }
@@ -128,12 +129,17 @@ namespace Assets.Scripts
             }
             if (Input.GetMouseButtonDown(2))
             {
-                spawn_block(team);
+                if(Physics.Raycast(ray, out hit))
+                {
+                    spawn_block(team);
+                }
             }
 
         }
         private void FixedUpdate()
         {
+            if (!isLocalPlayer)
+                return;
             foreach (GameObject unit in units)
             {
                 unit.GetComponent<Unit_controller>().move();
@@ -150,6 +156,7 @@ namespace Assets.Scripts
         {
             team = (Team)msg.ReadMessage<IntegerMessage>().value;
             Debug.Log("I got assigned to team " + team);
+            tag = Reference.player_tags[(int)team];
         }
         
 
@@ -218,9 +225,12 @@ namespace Assets.Scripts
         private void spawn_block(Team team)
         {
             client.Send(Reference.spawn_message, new IntegerMessage());
-            units = GameObject.FindGameObjectsWithTag("Unit_blue");
         }
 
+        public void update_units()
+        {
+            units = GameObject.FindGameObjectsWithTag(Reference.unit_tags[(int)team]);
+        }
 
     }
 }

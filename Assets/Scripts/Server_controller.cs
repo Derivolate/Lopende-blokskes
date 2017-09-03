@@ -8,7 +8,7 @@ using UnityEngine.Networking.NetworkSystem;
 
 namespace Assets.Scripts
 {
-    class Server_controller:MonoBehaviour
+    class Server_controller:NetworkBehaviour
     {
         private List<int> team_ids = new List<int>();
         public GameObject unit_prefab;
@@ -23,19 +23,22 @@ namespace Assets.Scripts
         {
             team_ids.Add(msg.conn.connectionId);
             IntegerMessage reply = new IntegerMessage(team_ids.Count - 1);
-            NetworkServer.SendToClient(msg.conn.connectionId, Reference.team_message, reply);
-
+            NetworkServer.SendToClient(msg.conn.connectionId, Reference.team_message, reply);   
         }
         
         private void spawn_unit(NetworkMessage msg)
         {
-            GameObject unit = Instantiate(unit_prefab);
             for (int i = 0; i < team_ids.Count; i++)
             {
                 if (team_ids[i] == msg.conn.connectionId)
                 {
-                    unit.GetComponent<Unit_controller>().init(new Vector3(1, .5f, 1), (Team)i);
+                    GameObject unit = Instantiate(unit_prefab);
+                    Unit_controller controller = unit.GetComponent<Unit_controller>();
+                    //unit.GetComponent<Renderer>().material.color = Reference.colors[i];
                     NetworkServer.SpawnWithClientAuthority(unit, msg.conn);
+                    controller.Rpc_init(new Vector3(1, .5f, 1), (Team)i);
+                    
+                   
                 }
             }
         }
