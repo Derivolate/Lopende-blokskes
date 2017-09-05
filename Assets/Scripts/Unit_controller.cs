@@ -12,7 +12,7 @@ namespace Assets.Scripts
         public Vector3 destination { get; set; }
         private Rigidbody rb;
         private Renderer rend;
-
+        private Player_controller player;
 
         [SyncVar]
         private Color base_color;
@@ -56,8 +56,8 @@ namespace Assets.Scripts
                 return;
 
             destination = new Vector3(0, .25f, 0);
-            GameObject player = GameObject.FindGameObjectWithTag(Reference.player_tags[(int)team]);
-            player.GetComponent<Player_controller>().update_units();
+            player = GameObject.FindGameObjectWithTag(Reference.player_tags[(int)team]).GetComponent<Player_controller>();
+            player.update_units();
         }
 
         /// <summary>
@@ -107,7 +107,17 @@ namespace Assets.Scripts
 
         public void destroy()
         {
-            Destroy(this);
+            if (!hasAuthority)
+                return;
+            //Ask the server nicely to destroy this on all clients
+            NetworkServer.Destroy(gameObject);
+        }
+        private void OnDestroy()
+        {
+            //Only when the server responds to really destroy this. Ask the player to update the list of units
+            if (!hasAuthority)
+                return;
+            player.remove_unit(gameObject);
         }
         #region coloring methods
         public void reset_color()

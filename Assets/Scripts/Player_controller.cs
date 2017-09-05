@@ -10,60 +10,56 @@ namespace Assets.Scripts
 {
     public class Player_controller : NetworkBehaviour
     {
+        //A prefab for the cursor
         public Transform cursor;
+        //A prefab for the square that is shown when dragging the mouse to select some units
         public Image selection_square;
-        public GameObject unit_prefab;
-
+        //The camera is already in the scene, so it cannot be set through the inspector and thus needs te be looked up during the initialization
         private Camera main_cam;
-
-        [SyncVar]
-        public Team team;
-
         private NetworkClient client;
+
+        public Team team;
 
         //Units is an array of all the units belonging to this player.
         private GameObject[] units = new GameObject[0];
+        //A list of all selected units in the scene. Everything in here is also in units
         private List<GameObject> selected_units = new List<GameObject>();
-        private Server_controller server_controller;
-
-        private SyncListInt team_ids = new SyncListInt();
-
+        //This is used for temporary storage of the initial mouse-click when dragging to select a unit
         private Vector2 selection_square_corner;
-        #region unity functions
 
-        void Start()
+        //All these functions are called by the unityengine
+        #region unity functions
+        private void Start()
         {
+            //All initialization should only be done if this object is the player object on this client
             if (!isLocalPlayer)
                 return;
 
+            //Instantiate prefabs and find the camera for later reference
             main_cam = FindObjectOfType<Camera>();
             cursor = Instantiate(cursor);
             selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
 
+            //Initialize the prefabs
             hide_cursor();
             reset_selection_square();
 
-            for(int i = 0; i<team_ids.Count; i++)
-            {
-                team_ids[i] = -1;
-            }
+
             client = NetworkManager.singleton.client;
-
-            NetworkManager.singleton.client.RegisterHandler(Reference.team_message, set_team);
-            if(isLocalPlayer)
-                client.Send(Reference.team_message, new IntegerMessage());
+            //Register a handler to recieve the message containing team information
+            client.RegisterHandler(Reference.team_message, set_team);
+            //Send a message to request team information
+            client.Send(Reference.team_message, new IntegerMessage());
         }
-
-
-        void Update()
+        private void Update()
         {
             if (!isLocalPlayer)
                 return;
-            Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
             //If the left mouse button is pressed, try selecting a unit
             if (Input.GetMouseButtonDown(0))
             {
+                RaycastHit hit;
+                Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
                 selection_square_corner = Input.mousePosition;
                 if (Physics.Raycast(ray, out hit))
                 {
@@ -97,6 +93,8 @@ namespace Assets.Scripts
                     Mathf.Abs(mouse_pos.x - selection_square_corner.x),
                     Mathf.Abs(mouse_pos.y - selection_square_corner.y));
                 selection_square.rectTransform.sizeDelta = size;
+
+                //Select all the units in the square
                 drag_select_unit(bot_left_corner, bot_left_corner + size);
 
             }
@@ -111,17 +109,19 @@ namespace Assets.Scripts
                 //If no units are selected, no unit will be moved
                 if (selected_units.Count == 0)
                     return;
-
+                RaycastHit hit;
+                Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
                 if (Physics.Raycast(ray, out hit))
                 {
                     //TODO: let the this raycast go through units so it will always hit the 'world'
                     if (hit.transform.tag == "World")
                     {
-
+                        //Set the destination for each selected unit to the clicked location
                         foreach (GameObject unit in selected_units)
                         {
                             unit.GetComponent<Unit_controller>().destination = hit.point;
                         }
+                        //Move the cursor to the clicked location
                         cursor.transform.position = hit.point + new Vector3(0, .001f, 0);
 
                     }
@@ -129,7 +129,10 @@ namespace Assets.Scripts
             }
             if (Input.GetKeyDown(KeyCode.S))
             {
-                if(Physics.Raycast(ray, out hit))
+                RaycastHit hit;
+                Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
+                //This is to prevent units spawning in each client when using multiple clients
+                if (Physics.Raycast(ray, out hit))
                 {
                     spawn_block(team);
                 }
@@ -145,12 +148,10 @@ namespace Assets.Scripts
                 unit.GetComponent<Unit_controller>().move();
             }
         }
-        private void OnConnectedToServer()
-        {
-            
-        }
         #endregion
-        
+
+        //All network communication stuff is in here
+        #region Network functions
         //This is called when the client recieves a team_message
         private void set_team(NetworkMessage msg)
         {
@@ -158,12 +159,38 @@ namespace Assets.Scripts
             Debug.Log("I got assigned to team " + team);
             tag = Reference.player_tags[(int)team];
         }
-        
 
+        /// <summary>
+        /// Sends a message to the server to ask it to spawn a unit for the specified team
+        /// </summary>
+        /// <param name="team"></param>
+        private void spawn_block(Team team)
+        {
+            client.Send(Reference.spawn_message, new IntegerMessage());
+        }
+
+        /// <summary>
+        /// Updates the units array. This needs to be called on the player object each time a unit of that team spawns or is destroyed
+        /// </summary>
+        public void update_units()
+        {
+            units = GameObject.FindGameObjectsWithTag(Reference.unit_tags[(int)team]);
+        }
+
+        public void remove_unit(GameObject unit)
+        {
+            if (selected_units.Contains(unit))
+                selected_units.Remove(unit);
+
+            update_units();
+        }
+        #endregion
+
+        //All things concerning unit selection is in here
+        #region unit selection functions
         /// <summary>
         /// Moves the cursor to a place far far away from here
         /// </summary>
-        #region unit selection methods
         private void hide_cursor()
         {
             cursor.transform.position = new Vector3(100000, 100000, 100000);
@@ -222,15 +249,6 @@ namespace Assets.Scripts
         }
         #endregion
 
-        private void spawn_block(Team team)
-        {
-            client.Send(Reference.spawn_message, new IntegerMessage());
-        }
-
-        public void update_units()
-        {
-            units = GameObject.FindGameObjectsWithTag(Reference.unit_tags[(int)team]);
-        }
 
     }
 }

@@ -24,7 +24,7 @@ namespace Assets.Scripts
             team_ids.Add(msg.conn.connectionId);
             IntegerMessage reply = new IntegerMessage(team_ids.Count - 1);
             NetworkServer.SendToClient(msg.conn.connectionId, Reference.team_message, reply);   
-        }
+        } 
         
         private void spawn_unit(NetworkMessage msg)
         {
