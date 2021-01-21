@@ -13,6 +13,9 @@ TagManager:
   - Player_red
   - Player_yellow
   - Player_green
+  - Server
+  - Cursor
+  - Selection_square
   layers:
   - Default
   - TransparentFX

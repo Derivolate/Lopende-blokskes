@@ -8,7 +8,8 @@ using UnityEngine.Networking.NetworkSystem;
 
 namespace Assets.Scripts
 {
-    public class Player_controller : NetworkBehaviour
+    //public class Player_controller : NetworkBehaviour
+    public class Player_controller : MonoBehaviour
     {
         //A prefab for the cursor
         public Transform cursor;
@@ -16,8 +17,9 @@ namespace Assets.Scripts
         public Image selection_square;
         //The camera is already in the scene, so it cannot be set through the inspector and thus needs te be looked up during the initialization
         private Camera main_cam;
-        private NetworkClient client;
+        //private NetworkClient client;
 
+        public GameObject unit_prefab;
         public Team team;
 
         //Units is an array of all the units belonging to this player.
@@ -31,9 +33,9 @@ namespace Assets.Scripts
         #region unity functions
         private void Start()
         {
-            //All initialization should only be done if this object is the player object on this client
-            if (!isLocalPlayer)
-                return;
+            ////All initialization should only be done if this object is the player object on this client
+            //if (!isLocalPlayer)
+            //    return;
 
             //Instantiate prefabs and find the camera for later reference
             main_cam = FindObjectOfType<Camera>();
@@ -45,16 +47,16 @@ namespace Assets.Scripts
             reset_selection_square();
 
 
-            client = NetworkManager.singleton.client;
-            //Register a handler to recieve the message containing team information
-            client.RegisterHandler(Reference.team_message, set_team);
-            //Send a message to request team information
-            client.Send(Reference.team_message, new IntegerMessage());
+            //client = NetworkManager.singleton.client;
+            ////Register a handler to recieve the message containing team information
+            //client.RegisterHandler(Reference.team_message, set_team);
+            ////Send a message to request team information.
+            //client.Send(Reference.team_message, new IntegerMessage());
         }
         private void Update()
         {
-            if (!isLocalPlayer)
-                return;
+            //if (!isLocalPlayer)
+            //    return;
             //If the left mouse button is pressed, try selecting a unit
             if (Input.GetMouseButtonDown(0))
             {
@@ -113,7 +115,7 @@ namespace Assets.Scripts
                 Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
                 if (Physics.Raycast(ray, out hit))
                 {
-                    //TODO: let the this raycast go through units so it will always hit the 'world'
+                    //Todo: let the this raycast go through units so it will always hit the 'world'
                     if (hit.transform.tag == "World")
                     {
                         //Set the destination for each selected unit to the clicked location
@@ -141,8 +143,8 @@ namespace Assets.Scripts
         }
         private void FixedUpdate()
         {
-            if (!isLocalPlayer)
-                return;
+            //if (!isLocalPlayer)
+            //    return;
             foreach (GameObject unit in units)
             {
                 unit.GetComponent<Unit_controller>().move();
@@ -153,9 +155,10 @@ namespace Assets.Scripts
         //All network communication stuff is in here
         #region Network functions
         //This is called when the client recieves a team_message
-        private void set_team(NetworkMessage msg)
+        //private void set_team(NetworkMessage msg)
+        private void set_team()
         {
-            team = (Team)msg.ReadMessage<IntegerMessage>().value;
+            //team = (Team)msg.ReadMessage<IntegerMessage>().value;
             Debug.Log("I got assigned to team " + team);
             tag = Reference.player_tags[(int)team];
         }
@@ -166,7 +169,10 @@ namespace Assets.Scripts
         /// <param name="team"></param>
         private void spawn_block(Team team)
         {
-            client.Send(Reference.spawn_message, new IntegerMessage());
+            //client.Send(Reference.spawn_message, new IntegerMessage());
+            GameObject unit = Instantiate(unit_prefab);
+            Unit_controller controller = unit.GetComponent<Unit_controller>();
+            controller.init(new Vector3(1, .5f, 1), team);
         }
 
         /// <summary>

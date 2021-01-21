@@ -4,17 +4,17 @@ using System.Collections;
 
 namespace Assets.Scripts
 {
-
-    public class Unit_controller:NetworkBehaviour
+    //public class Unit_controller:NetworkBehaviour
+    public class Unit_controller:MonoBehaviour
     {
-        [SyncVar]
+        //[SyncVar]
         public Team team;
         public Vector3 destination { get; set; }
         private Rigidbody rb;
         private Renderer rend;
         private Player_controller player;
 
-        [SyncVar]
+        //[SyncVar]
         private Color base_color;
 
         private bool has_started;
@@ -26,12 +26,21 @@ namespace Assets.Scripts
         {
             rb = GetComponent<Rigidbody>();
             rend = GetComponent<Renderer>();
+            
         }
 
         
 
-        [ClientRpc]
-        public void Rpc_init(Vector3 coords, Team _team)
+        //[ClientRpc]
+        //public void Rpc_init(Vector3 coords, Team _team)
+        //{
+        //    transform.position = coords;
+        //    team = _team;
+        //    has_inited = true;
+        //    if (has_started)
+        //        late_init();
+        //}
+        public void init(Vector3 coords, Team _team)
         {
             transform.position = coords;
             team = _team;
@@ -52,8 +61,8 @@ namespace Assets.Scripts
         }
         private void late_init()
         {
-            if (!hasAuthority)
-                return;
+            //if (!hasAuthority)
+            //    return;
 
             destination = new Vector3(0, .25f, 0);
             player = GameObject.FindGameObjectWithTag(Reference.player_tags[(int)team]).GetComponent<Player_controller>();
@@ -107,16 +116,17 @@ namespace Assets.Scripts
 
         public void destroy()
         {
-            if (!hasAuthority)
-                return;
-            //Ask the server nicely to destroy this on all clients
-            NetworkServer.Destroy(gameObject);
+            //if (!hasAuthority)
+            //    return;
+            ////Ask the server nicely to destroy this on all clients
+            //NetworkServer.Destroy(gameObject);
+            Destroy(gameObject);
         }
         private void OnDestroy()
         {
-            //Only when the server responds to really destroy this. Ask the player to update the list of units
-            if (!hasAuthority)
-                return;
+            ////Only when the server responds to really destroy this. Ask the player to update the list of units
+            //if (!hasAuthority)
+            //    return;
             player.remove_unit(gameObject);
         }
         #region coloring methods
