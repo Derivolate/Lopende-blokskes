@@ -6,22 +6,18 @@ namespace Assets.Scripts
 {
     //public class Unit_controller:NetworkBehaviour
     public class Unit_controller:MonoBehaviour
-    {
-        //[SyncVar]
+    { 
         public Team team;
         public Vector3 destination { get; set; }
         private Rigidbody rb;
         private Renderer rend;
         private Player_controller player;
-
-        //[SyncVar]
         private Color base_color;
 
         private bool has_started;
         private bool has_inited;
 
-        //public Unit(GameObject _cube, Vector3 coords, team _team) :this(_cube,coords,_team, new Vector3(123,456,789)){}
-        //public Unit(GameObject _cube, Vector3 coords, team _team, Vector3 _destination)
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
@@ -29,17 +25,7 @@ namespace Assets.Scripts
             
         }
 
-        
 
-        //[ClientRpc]
-        //public void Rpc_init(Vector3 coords, Team _team)
-        //{
-        //    transform.position = coords;
-        //    team = _team;
-        //    has_inited = true;
-        //    if (has_started)
-        //        late_init();
-        //}
         public void init(Vector3 coords, Team _team)
         {
             transform.position = coords;
@@ -61,9 +47,6 @@ namespace Assets.Scripts
         }
         private void late_init()
         {
-            //if (!hasAuthority)
-            //    return;
-
             destination = new Vector3(0, .25f, 0);
             player = GameObject.FindGameObjectWithTag(Reference.player_tags[(int)team]).GetComponent<Player_controller>();
             player.update_units();
@@ -125,8 +108,6 @@ namespace Assets.Scripts
         private void OnDestroy()
         {
             ////Only when the server responds to really destroy this. Ask the player to update the list of units
-            //if (!hasAuthority)
-            //    return;
             player.remove_unit(gameObject);
         }
         #region coloring methods

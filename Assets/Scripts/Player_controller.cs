@@ -33,9 +33,6 @@ namespace Assets.Scripts
         #region unity functions
         private void Start()
         {
-            ////All initialization should only be done if this object is the player object on this client
-            //if (!isLocalPlayer)
-            //    return;
 
             //Instantiate prefabs and find the camera for later reference
             main_cam = FindObjectOfType<Camera>();
@@ -46,17 +43,9 @@ namespace Assets.Scripts
             hide_cursor();
             reset_selection_square();
 
-
-            //client = NetworkManager.singleton.client;
-            ////Register a handler to recieve the message containing team information
-            //client.RegisterHandler(Reference.team_message, set_team);
-            ////Send a message to request team information.
-            //client.Send(Reference.team_message, new IntegerMessage());
         }
         private void Update()
         {
-            //if (!isLocalPlayer)
-            //    return;
             //If the left mouse button is pressed, try selecting a unit
             if (Input.GetMouseButtonDown(0))
             {
@@ -143,8 +132,6 @@ namespace Assets.Scripts
         }
         private void FixedUpdate()
         {
-            //if (!isLocalPlayer)
-            //    return;
             foreach (GameObject unit in units)
             {
                 unit.GetComponent<Unit_controller>().move();
@@ -154,15 +141,6 @@ namespace Assets.Scripts
 
         //All network communication stuff is in here
         #region Network functions
-        //This is called when the client recieves a team_message
-        //private void set_team(NetworkMessage msg)
-        private void set_team()
-        {
-            //team = (Team)msg.ReadMessage<IntegerMessage>().value;
-            Debug.Log("I got assigned to team " + team);
-            tag = Reference.player_tags[(int)team];
-        }
-
         /// <summary>
         /// Sends a message to the server to ask it to spawn a unit for the specified team
         /// </summary>
