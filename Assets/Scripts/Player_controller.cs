@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Networking;
-using UnityEngine.Networking.NetworkSystem;
 
 namespace Assets.Scripts
 {
@@ -22,6 +20,7 @@ namespace Assets.Scripts
         public GameObject unit_prefab;
         public Team team;
 
+
         //Units is an array of all the units belonging to this player.
         private GameObject[] units = new GameObject[0];
         //A list of all selected units in the scene. Everything in here is also in units
@@ -35,9 +34,9 @@ namespace Assets.Scripts
         {
 
             //Instantiate prefabs and find the camera for later reference
-            main_cam = FindObjectOfType<Camera>();
+            //main_cam = FindObjectOfType<Camera>();
             cursor = Instantiate(cursor);
-            selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
+            //selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
 
             //Initialize the prefabs
             hide_cursor();
