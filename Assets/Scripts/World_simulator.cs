@@ -36,7 +36,7 @@ namespace Assets.Scripts
 
             create_object(plane_prefab);
 
-            pause();
+            start();
         }
 
         public void start()
