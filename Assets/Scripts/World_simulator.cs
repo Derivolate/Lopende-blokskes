@@ -12,6 +12,14 @@ namespace Assets.Scripts
     {
         private float simulation_speed;
 
+        private GameObject map_cube;
+        private GameObject map_slant;
+        private GameObject map_corner;
+        private GameObject map_peek;
+        private GameObject map_stomp;
+
+        private Map map;
+
         private Scene simulation_scene;
         private PhysicsScene physics_scene;
         private bool simulation_enabled;
@@ -21,9 +29,14 @@ namespace Assets.Scripts
 
         public GameObject unit_prefab;
 
-        public World_simulator(GameObject unit_prefab, GameObject plane_prefab, float simulation_speed = 0.05F)   // No idea what this speed should be
+        public World_simulator(GameObject unit_prefab, GameObject plane_prefab, GameObject map_cube, GameObject map_slant, GameObject map_corner, GameObject map_peek, GameObject map_stomp, float simulation_speed = 0.05F)   // No idea what this speed should be
         {
             this.unit_prefab = unit_prefab;
+            this.map_cube = map_cube;
+            this.map_slant = map_slant;
+            this.map_corner = map_corner;
+            this.map_peek = map_peek;
+            this.map_stomp = map_stomp;
 
             units = new Dictionary<int, Unit_simulator>();
             next_unit_id = 0;
@@ -53,6 +66,41 @@ namespace Assets.Scripts
         {
             if (simulation_enabled)
                 physics_scene.Simulate(simulation_speed);
+        }
+
+        public void load_map(TextAsset map_file)
+        {
+            map = JsonUtility.FromJson<Map>(map_file.text);
+
+            Map_piece test_piece = new Map_piece();
+
+            foreach (Map_piece piece in map.pieces)
+            {
+                GameObject go;
+                switch (piece.type)
+                {
+                    case Map_pieces.cube:
+                        go = create_object(map_cube);
+                        break;
+                    case Map_pieces.corner:
+                        go = create_object(map_corner);
+                        break;
+                    case Map_pieces.peek:
+                        go = create_object(map_peek);
+                        break;
+                    case Map_pieces.slant:
+                        go = create_object(map_slant);
+                        break;
+                    default: //stomp
+                        go = create_object(map_stomp);
+                        break;
+                }
+                go.transform.rotation = Quaternion.Euler(piece.e_rotation);
+                go.transform.localScale = piece.scale;
+                go.transform.position = piece.position;
+                //Disable the meshrenderer in the simulation
+                go.GetComponent<MeshRenderer>().enabled = false;
+            }
         }
 
         private GameObject create_object(GameObject prefab)
@@ -85,7 +133,7 @@ namespace Assets.Scripts
         {
             Unit_data[] unit_data = units.Select(p => p.Value.get_unit_data(p.Key)).ToArray();
 
-            return new World_data(unit_data);
+            return new World_data(unit_data, map);
         }
     }
 }

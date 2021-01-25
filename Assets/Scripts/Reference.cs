@@ -24,4 +24,12 @@ namespace Assets.Scripts
         yellow,
         green,
     }
+    public enum Map_pieces
+    {
+        cube = 1,
+        slant = 2,
+        corner = 3,
+        stomp = 4,
+        peek = 5,
+    }
 }

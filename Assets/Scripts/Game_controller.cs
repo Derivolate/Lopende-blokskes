@@ -5,9 +5,17 @@ using UnityEngine;
 namespace Assets.Scripts {
     public class Game_controller : MonoBehaviour
     {
+        //TODO: load prefabs when needed instead of passing them on
         public GameObject unit_prefab;
         public GameObject plane_prefab;
 
+        public GameObject map_cube;
+        public GameObject map_slant;
+        public GameObject map_corner;
+        public GameObject map_peek;
+        public GameObject map_stomp;
+
+        public TextAsset map_file;
         public float simulation_speed;
 
         private World_simulator w_simulator;
@@ -15,7 +23,8 @@ namespace Assets.Scripts {
         // Start is called before the first frame update
         void Start()
         {
-            w_simulator = new World_simulator(unit_prefab, plane_prefab, simulation_speed);
+            w_simulator = new World_simulator(unit_prefab, plane_prefab, map_cube, map_slant, map_corner, map_peek, map_stomp, simulation_speed);
+            w_simulator.load_map(map_file);
         }
 
         // Update is called once per frame

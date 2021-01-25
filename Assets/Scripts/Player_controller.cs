@@ -17,11 +17,17 @@ namespace Assets.Scripts
         public Image selection_square;
         //The camera is already in the scene, so it cannot be set through the inspector and thus needs te be looked up during the initialization
         private Camera main_cam;
-        //private NetworkClient client;
 
         public Game_controller game_controller;
         public World_data world_data;
         public GameObject unit_prefab;
+
+        public GameObject map_cube;
+        public GameObject map_slant;
+        public GameObject map_corner;
+        public GameObject map_peek;
+        public GameObject map_stomp;
+
         public Team team;
 
         //Units is an array of all the units belonging to this player.
@@ -31,6 +37,12 @@ namespace Assets.Scripts
         //This is used for temporary storage of the initial mouse-click when dragging to select a unit
         private Vector2 selection_square_corner;
 
+        //Things necessary for the minimap
+        public Transform minimap;
+        public GameObject minimap_unit;
+        private List<GameObject> minimap_units = new List<GameObject>();
+
+        private bool update_map = true;
         //All these functions are called by the unityengine
         #region unity functions
         private void Start()
@@ -50,20 +62,14 @@ namespace Assets.Scripts
 
         private void Update()
         {
-            world_data = game_controller.get_world_data();
+            update_world();
 
-            foreach (Unit_data data in world_data.units)
-            {
-                GameObject unit;
-                if (!units.TryGetValue(data.id, out unit))
-                {
-                    unit = Instantiate(unit_prefab);
-                    units.Add(data.id, unit);
-                }
+            update_input();
+            update_minimap();
 
-                update_unit_data(unit, data);
-            }
-
+        }
+        private void update_input()
+        {
             //If the left mouse button is pressed, try selecting a unit
             if (Input.GetMouseButtonDown(0))
             {
@@ -90,12 +96,15 @@ namespace Assets.Scripts
             {
                 ////Create the selection square
 
+                
                 Vector2 mouse_pos = Input.mousePosition;
-                //Get the bottom left corner and set the position of the selection square to that corner
-                Vector2 bot_left_corner = new Vector2(
-                    (mouse_pos.x < selection_square_corner.x ? mouse_pos.x : selection_square_corner.x),
-                    (mouse_pos.y < selection_square_corner.y ? mouse_pos.y : selection_square_corner.y));
-                selection_square.rectTransform.position = bot_left_corner;
+
+                //TODO: commenting this will reproduce 'the UI bug'. Has to be fixed
+                ////Get the bottom left corner and set the position of the selection square to that corner
+                //Vector2 bot_left_corner = new Vector2(
+                //    (mouse_pos.x < selection_square_corner.x ? mouse_pos.x : selection_square_corner.x),
+                //    (mouse_pos.y < selection_square_corner.y ? mouse_pos.y : selection_square_corner.y));
+                //selection_square.rectTransform.position = bot_left_corner;
 
                 //Get the size of the square and set it
                 Vector2 size = new Vector2(
@@ -103,8 +112,8 @@ namespace Assets.Scripts
                     Mathf.Abs(mouse_pos.y - selection_square_corner.y));
                 selection_square.rectTransform.sizeDelta = size;
 
-                //Select all the units in the square
-                drag_select_unit(bot_left_corner, bot_left_corner + size);
+                ////Select all the units in the square
+                //drag_select_unit(bot_left_corner, bot_left_corner + size);
 
             }
             else if (Input.GetMouseButtonUp(0))
@@ -148,14 +157,51 @@ namespace Assets.Scripts
                     game_controller.create_unit(team, new Vector3(1, .5f, 1));
                 }
             }
-
         }
-        private void FixedUpdate()
+        private void update_world()
         {
-            //foreach (GameObject unit in units)
-            //{
-            //    unit.GetComponent<Unit_controller>().move();
-            //}
+            world_data = game_controller.get_world_data();
+
+            foreach (Unit_data data in world_data.units)
+            {
+                GameObject unit;
+                if (!units.TryGetValue(data.id, out unit))
+                {
+                    unit = Instantiate(unit_prefab);
+                    units.Add(data.id, unit);
+                }
+
+                update_unit_data(unit, data);
+            }
+            if (update_map)
+            {
+                foreach (Map_piece piece in world_data.map.pieces)
+                {
+                    GameObject go;
+                    switch (piece.type)
+                    {
+                        case Map_pieces.cube:
+                            go = Instantiate(map_cube);
+                            break;
+                        case Map_pieces.corner:
+                            go = Instantiate(map_corner);
+                            break;
+                        case Map_pieces.peek:
+                            go = Instantiate(map_peek);
+                            break;
+                        case Map_pieces.slant:
+                            go = Instantiate(map_slant);
+                            break;
+                        default: //stomp
+                            go = Instantiate(map_stomp);
+                            break;
+                    }
+                    go.transform.rotation = Quaternion.Euler(piece.e_rotation);
+                    go.transform.localScale = piece.scale;
+                    go.transform.position = piece.position;
+                }
+                update_map = false;
+            }
         }
         #endregion
 
@@ -167,6 +213,35 @@ namespace Assets.Scripts
             obj.transform.rotation = data.rotation;
             rb.velocity = data.velocity;
             rb.angularVelocity = data.angular_velocity;
+        }
+        private void update_minimap()
+        {
+            //Clear all units from the minimap
+            foreach (GameObject mm_unit in minimap_units)
+            {
+                Destroy(mm_unit);
+            }
+            //get minmax positions of real map
+            //get minmax positions of minimap
+            Vector2 min_real = new Vector2(-5, -5);
+            Vector2 max_real = new Vector2(5, 5);
+            Vector2 min_mini = new Vector2(0, 0);
+            Vector2 max_mini = new Vector2(200, 200);
+            Vector2 transl = min_mini - min_real;
+            Vector2 scale = (max_mini - min_mini) / (max_real - min_real);
+
+            foreach (GameObject unit in units.Values)
+            {
+                Vector2 real_pos = new Vector2(unit.transform.position.x, unit.transform.position.z);
+                Vector2 mini_pos = (real_pos + transl) * scale;
+
+
+                Vector3 real_euler_rotation = unit.transform.rotation.eulerAngles;
+
+                GameObject new_mm_unit = Instantiate(minimap_unit, mini_pos, Quaternion.Euler(0, 0, real_euler_rotation.y), minimap);
+
+                minimap_units.Add(new_mm_unit);
+            }
         }
 
         //All network communication stuff is in here
