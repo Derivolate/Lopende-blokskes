@@ -19,13 +19,15 @@ namespace Assets.Scripts
         private Camera main_cam;
         //private NetworkClient client;
 
+        public Game_controller game_controller;
+        public World_data world_data;
         public GameObject unit_prefab;
         public Team team;
 
         //Units is an array of all the units belonging to this player.
-        private GameObject[] units = new GameObject[0];
+        private Dictionary<int, GameObject> units;
         //A list of all selected units in the scene. Everything in here is also in units
-        private List<GameObject> selected_units = new List<GameObject>();
+        private List<int> selected_ids = new List<int>();
         //This is used for temporary storage of the initial mouse-click when dragging to select a unit
         private Vector2 selection_square_corner;
 
@@ -39,13 +41,29 @@ namespace Assets.Scripts
             cursor = Instantiate(cursor);
             selection_square = Instantiate(selection_square, FindObjectOfType<Canvas>().transform);
 
+            units = new Dictionary<int, GameObject>();
+
             //Initialize the prefabs
             hide_cursor();
             reset_selection_square();
-
         }
+
         private void Update()
         {
+            world_data = game_controller.get_world_data();
+
+            foreach (Unit_data data in world_data.units)
+            {
+                GameObject unit;
+                if (!units.TryGetValue(data.id, out unit))
+                {
+                    unit = Instantiate(unit_prefab);
+                    units.Add(data.id, unit);
+                }
+
+                update_unit_data(unit, data);
+            }
+
             //If the left mouse button is pressed, try selecting a unit
             if (Input.GetMouseButtonDown(0))
             {
@@ -98,7 +116,7 @@ namespace Assets.Scripts
             if (Input.GetMouseButtonDown(1))
             {
                 //If no units are selected, no unit will be moved
-                if (selected_units.Count == 0)
+                if (selected_ids.Count == 0)
                     return;
                 RaycastHit hit;
                 Ray ray = main_cam.ScreenPointToRay(Input.mousePosition);
@@ -108,9 +126,10 @@ namespace Assets.Scripts
                     if (hit.transform.tag == "World")
                     {
                         //Set the destination for each selected unit to the clicked location
-                        foreach (GameObject unit in selected_units)
+                        foreach (int id in selected_ids)
                         {
-                            unit.GetComponent<Unit_controller>().destination = hit.point;
+                            game_controller.set_target(id, hit.point);
+                            //unit.GetComponent<Unit_controller>().destination = hit.point;
                         }
                         //Move the cursor to the clicked location
                         cursor.transform.position = hit.point + new Vector3(0, .001f, 0);
@@ -125,19 +144,30 @@ namespace Assets.Scripts
                 //This is to prevent units spawning in each client when using multiple clients
                 if (Physics.Raycast(ray, out hit))
                 {
-                    spawn_block(team);
+                    //spawn_block(team);
+                    game_controller.create_unit(team, new Vector3(1, .5f, 1));
                 }
             }
 
         }
         private void FixedUpdate()
         {
-            foreach (GameObject unit in units)
-            {
-                unit.GetComponent<Unit_controller>().move();
-            }
+            //foreach (GameObject unit in units)
+            //{
+            //    unit.GetComponent<Unit_controller>().move();
+            //}
         }
         #endregion
+
+        private void update_unit_data(GameObject obj, Unit_data data)
+        {
+            Rigidbody rb = obj.GetComponent<Rigidbody>();
+
+            obj.transform.position = data.position;
+            obj.transform.rotation = data.rotation;
+            rb.velocity = data.velocity;
+            rb.angularVelocity = data.angular_velocity;
+        }
 
         //All network communication stuff is in here
         #region Network functions
@@ -148,26 +178,26 @@ namespace Assets.Scripts
         private void spawn_block(Team team)
         {
             //client.Send(Reference.spawn_message, new IntegerMessage());
-            GameObject unit = Instantiate(unit_prefab);
-            Unit_controller controller = unit.GetComponent<Unit_controller>();
-            controller.init(new Vector3(1, .5f, 1), team);
+            //GameObject unit = Instantiate(unit_prefab);
+            //Unit_controller controller = unit.GetComponent<Unit_controller>();
+            //controller.init(new Vector3(1, .5f, 1), team);
         }
 
         /// <summary>
         /// Updates the units array. This needs to be called on the player object each time a unit of that team spawns or is destroyed
         /// </summary>
-        public void update_units()
+        /*public void update_units()
         {
             units = GameObject.FindGameObjectsWithTag(Reference.unit_tags[(int)team]);
-        }
+        }*/
 
-        public void remove_unit(GameObject unit)
+        /*public void remove_unit(GameObject unit)
         {
-            if (selected_units.Contains(unit))
-                selected_units.Remove(unit);
+            if (selected_ids.Contains(unit))
+                selected_ids.Remove(unit);
 
             update_units();
-        }
+        }*/
         #endregion
 
         //All things concerning unit selection is in here
@@ -187,17 +217,17 @@ namespace Assets.Scripts
 
         private void drag_select_unit(Vector2 botleft, Vector2 topright)
         {
-            if (!Input.GetKey(KeyCode.LeftShift) && selected_units.Count > 1)
+            if (!Input.GetKey(KeyCode.LeftShift) && selected_ids.Count > 1)
             {
                 deselect_all_units();
             }
-            foreach (GameObject unit in units)
+            foreach (KeyValuePair<int, GameObject> u in units)
             {
-                Vector2 pos = main_cam.WorldToScreenPoint(unit.transform.position);
+                Vector2 pos = main_cam.WorldToScreenPoint(u.Value.transform.position);
                 if (pos.x > botleft.x && pos.x < topright.x && pos.y > botleft.y && pos.y < topright.y)
                 {
-                    selected_units.Add(unit);
-                    unit.GetComponent<Unit_controller>().set_selected_color();
+                    selected_ids.Add(u.Key);
+                    u.Value.GetComponent<Unit_controller>().set_selected_color();
                 }
             }
         }
@@ -209,12 +239,12 @@ namespace Assets.Scripts
                 deselect_all_units();
             }
             //Loop through all units and check if it's the one that was clicked. If it is the one select it and break the loop.
-            foreach (GameObject unit in units)
+            foreach (KeyValuePair<int, GameObject> u in units)
             {
-                if (unit.transform.Equals(hit.transform))
+                if (u.Value.transform.Equals(hit.transform))
                 {
-                    selected_units.Add(unit);
-                    unit.GetComponent<Unit_controller>().set_selected_color();
+                    selected_ids.Add(u.Key);
+                    u.Value.GetComponent<Unit_controller>().set_selected_color();
                     break;
                 }
             }
@@ -225,11 +255,11 @@ namespace Assets.Scripts
         /// </summary>
         private void deselect_all_units()
         {
-            foreach (GameObject unit in selected_units)
+            foreach (GameObject unit in units.Values)
             {
                 unit.GetComponent<Unit_controller>().reset_color();
             }
-            selected_units.Clear();
+            selected_ids.Clear();
         }
         #endregion
 
