@@ -14,6 +14,7 @@ namespace Assets.Scripts
 
         private Scene simulation_scene;
         private PhysicsScene physics_scene;
+        private bool simulation_enabled;
 
         Dictionary<int, Unit_simulator> units;
         private int next_unit_id;
@@ -35,22 +36,23 @@ namespace Assets.Scripts
 
             create_object(plane_prefab);
 
-            start();
+            pause();
         }
 
         public void start()
         {
-            Physics.autoSimulation = true;
+            simulation_enabled = true;
         }
 
         public void pause()
         {
-            Physics.autoSimulation = false;
+            simulation_enabled = false;
         }
 
         public void simulate()
         {
-            physics_scene.Simulate(simulation_speed);
+            if (simulation_enabled)
+                physics_scene.Simulate(simulation_speed);
         }
 
         private GameObject create_object(GameObject prefab)
