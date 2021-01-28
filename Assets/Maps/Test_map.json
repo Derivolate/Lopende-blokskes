@@ -1,40 +1,41 @@
 {
-    "pieces": [
+    "_map": [
         {
-            "type": 2,
-            "position": {
+            "_type": 2,
+            "_position": {
                 "x": 2.5,
                 "y": 0.5,
                 "z": -2.5
             },
-            "e_rotation": {
+            "_e_rotation": {
                 "x": 0.0,
                 "y": 90.0,
                 "z": 0.0
             },
-            "scale": {
+            "_scale": {
                 "x": 0.5,
                 "y": 0.5,
                 "z": 0.5
             }
         },
         {
-            "type": 1,
-            "position": {
+            "_type": 1,
+            "_position": {
                 "x": 0.0,
                 "y": 0.0,
                 "z": 0
             },
-            "e_rotation": {
+            "_e_rotation": {
                 "x": 0.0,
                 "y": 0,
                 "z": 0.0
             },
-            "scale": {
+            "_scale": {
                 "x": 10.0,
                 "y": 0.5,
                 "z": 10.0
             }
         }
-    ]
+    ],
+    "_units": []
 }

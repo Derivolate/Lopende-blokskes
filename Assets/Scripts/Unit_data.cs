@@ -7,8 +7,10 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
+    [Serializable]
     public class Unit_data
     {
+        //todo: make this serializable as done in Map_data.cs
         public int id { get; }
         public Team team { get; }
         public Vector3 position { get; }

@@ -18,7 +18,7 @@ namespace Assets.Scripts
         private GameObject map_peek;
         private GameObject map_stomp;
 
-        private Map map;
+        private List<Map_data> map;
 
         private Scene simulation_scene;
         private PhysicsScene physics_scene;
@@ -68,13 +68,23 @@ namespace Assets.Scripts
                 physics_scene.Simulate(simulation_speed);
         }
 
-        public void load_map(TextAsset map_file)
+        public void load_world(TextAsset map_file)
         {
-            map = JsonUtility.FromJson<Map>(map_file.text);
+            //Map_data data_test = new Map_data(Map_pieces.corner, new Vector3(), new Vector3(), new Vector3());
+            //List<Map_data> map_test = new List<Map_data>();
+            //map_test.Add(data_test);
+            //World_data world_test = new World_data(map_test);
+            //String str1 = JsonUtility.ToJson(data_test);
+            //String str2 = JsonUtility.ToJson(map_test);
+            //String str3 = JsonUtility.ToJson(world_test);
 
-            Map_piece test_piece = new Map_piece();
+            //List<Vector3> list_test = new List<Vector3>();
+            //list_test.Add(new Vector3(1,2,3));
+            //String str4 = JsonUtility.ToJson(list_test, true);
 
-            foreach (Map_piece piece in map.pieces)
+            World_data world = JsonUtility.FromJson<World_data>(map_file.text);
+            map = world.map;
+            foreach (Map_data piece in map)
             {
                 GameObject go;
                 switch (piece.type)
@@ -101,6 +111,7 @@ namespace Assets.Scripts
                 //Disable the meshrenderer in the simulation
                 go.GetComponent<MeshRenderer>().enabled = false;
             }
+            //Todo: load units
         }
 
         private GameObject create_object(GameObject prefab)

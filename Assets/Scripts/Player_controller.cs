@@ -8,7 +8,6 @@ using UnityEngine.Networking.NetworkSystem;
 
 namespace Assets.Scripts
 {
-    //public class Player_controller : NetworkBehaviour
     public class Player_controller : MonoBehaviour
     {
         //A prefab for the cursor
@@ -175,7 +174,7 @@ namespace Assets.Scripts
             }
             if (update_map)
             {
-                foreach (Map_piece piece in world_data.map.pieces)
+                foreach (Map_data piece in world_data.map)
                 {
                     GameObject go;
                     switch (piece.type)
@@ -243,37 +242,6 @@ namespace Assets.Scripts
                 minimap_units.Add(new_mm_unit);
             }
         }
-
-        //All network communication stuff is in here
-        #region Network functions
-        /// <summary>
-        /// Sends a message to the server to ask it to spawn a unit for the specified team
-        /// </summary>
-        /// <param name="team"></param>
-        private void spawn_block(Team team)
-        {
-            //client.Send(Reference.spawn_message, new IntegerMessage());
-            //GameObject unit = Instantiate(unit_prefab);
-            //Unit_controller controller = unit.GetComponent<Unit_controller>();
-            //controller.init(new Vector3(1, .5f, 1), team);
-        }
-
-        /// <summary>
-        /// Updates the units array. This needs to be called on the player object each time a unit of that team spawns or is destroyed
-        /// </summary>
-        /*public void update_units()
-        {
-            units = GameObject.FindGameObjectsWithTag(Reference.unit_tags[(int)team]);
-        }*/
-
-        /*public void remove_unit(GameObject unit)
-        {
-            if (selected_ids.Contains(unit))
-                selected_ids.Remove(unit);
-
-            update_units();
-        }*/
-        #endregion
 
         //All things concerning unit selection is in here
         #region unit selection functions

@@ -24,7 +24,7 @@ namespace Assets.Scripts {
         void Start()
         {
             w_simulator = new World_simulator(unit_prefab, plane_prefab, map_cube, map_slant, map_corner, map_peek, map_stomp, simulation_speed);
-            w_simulator.load_map(map_file);
+            w_simulator.load_world(map_file);
         }
 
         // Update is called once per frame

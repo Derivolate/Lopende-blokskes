@@ -4,7 +4,9 @@ using System.Collections;
 
 namespace Assets.Scripts
 {
-    //public class Unit_controller:NetworkBehaviour
+    /// <summary>
+    /// Client class containing rendering and colloring functions
+    /// </summary>
     public class Unit_controller:MonoBehaviour
     {
         public Team team;

@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
+    /// <summary>
+    /// Server class containing unit movement functions
+    /// </summary>
     public class Unit_simulator : MonoBehaviour
     {
         private Team team;
@@ -19,7 +22,7 @@ namespace Assets.Scripts
             this.rb = this.gameObject.GetComponent<Rigidbody>();
             this.target = new Vector3(0, .25f, 0);
         }
-
+        
         public void FixedUpdate()
         {
             Vector3 direction = -(transform.position - target);
@@ -60,7 +63,7 @@ namespace Assets.Scripts
                 }
             }
         }
-
+        
         public void init(Vector3 coords, Team _team)
         {
             transform.position = coords;
@@ -71,7 +74,7 @@ namespace Assets.Scripts
         {
             this.team = team;
         }
-
+        
         public void set_target(Vector3 target)
         {
             this.target = target;
